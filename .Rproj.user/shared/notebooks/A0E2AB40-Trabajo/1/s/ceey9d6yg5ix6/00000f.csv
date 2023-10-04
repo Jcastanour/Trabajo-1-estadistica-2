@@ -1,0 +1,2 @@
+"0","atipicos.criterio <- 3"
+"0","base.diagnostico[base.diagnostico$res.stud > atipicos.criterio | base.diagnostico$res.stud < -atipicos.criterio, ]"

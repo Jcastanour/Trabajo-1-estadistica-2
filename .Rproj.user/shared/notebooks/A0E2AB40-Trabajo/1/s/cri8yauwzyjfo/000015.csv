@@ -1,0 +1,4 @@
+"0","datos <- read.table(""Equipo29.txt"", header = T)"
+"0","modelo <- lm(Y ~ ., data = datos)"
+"0","betas <- round(coef(modelo), 4)"
+"0","betas1 <- as.data.frame(betas)"

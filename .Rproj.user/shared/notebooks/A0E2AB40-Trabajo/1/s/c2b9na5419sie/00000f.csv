@@ -1,0 +1,4 @@
+"0","hii.criterio <- 2*(6/(nrow(datos)))"
+"0","with(base.diagnostico,"
+"0","     plot(hii.value, xlab=""Observación"", ylab = ""Valor hii"","
+"0","          main = ""Gráfica de hii para las observaciones"", pch = 20, ylim=c(-0.3, 0.3)))"

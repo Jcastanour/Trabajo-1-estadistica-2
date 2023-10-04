@@ -1,0 +1,5 @@
+"0","tabla.coeficientes <- summary(modelo)$coefficients"
+"0","rownames(tabla.coeficientes) <- paste(""$\\beta_"", 0:5, ""$"", sep = """")"
+"0","tabla.coeficientes %>% "
+"0","  kable(col.names = c(""$\\hat{\\beta_j}$"", ""$SE(\\hat{\\beta_j})$"", ""$T_{0j}$"", ""P-valor""),caption = ""Resumen de los coeficientes"", escape=F, booktab=T, align = ""c"", row.names = T, digits = 4) %>% "
+"0","  kable_styling(latex_options = c(""HOLD_position""))"

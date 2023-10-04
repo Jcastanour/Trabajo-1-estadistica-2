@@ -1,0 +1,426 @@
+---
+header-includes:
+- \usepackage{longtable}
+- \usepackage[utf8]{inputenc}
+- \usepackage[spanish]{babel}\decimalpoint
+- \setlength{\parindent}{1.25cm}
+- \usepackage{amsmath}
+- \usepackage{array}
+- \usepackage{float}
+- \usepackage{multirow}
+output:
+  pdf_document:
+    number_sections: yes
+fontsize: 12pt
+papersize: letter
+geometry: margin = 1in
+language: es
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, fig.align = "center", fig.pos = "H")
+library(kableExtra)
+library(knitr)
+library(leaps)
+source("Functions.R")
+library(tidyverse)
+```
+
+```{=tex}
+\input{titlepage}
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+\thispagestyle{empty}
+\listoffigures
+\listoftables
+\newpage
+```
+```{=tex}
+\pagestyle{myheadings}
+\setcounter{page}{3}
+```
+\section{Pregunta 1}
+
+Teniendo en cuenta la base de datos brindada, en la cual hay 5 variables
+regresoras dadas por:
+$$Y_i = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i} + \beta_4 X_{4i} + \beta_5X_{5i}+ \varepsilon_i, \ \varepsilon_i \stackrel{\text{iid}}{\sim} N(0, \sigma^2); \ 1 \leqslant i \leqslant 69$$
+Donde:
+
+```{=tex}
+\begin{itemize}
+  \item Y: Riesgo de infección (en porcentaje).
+  \item $X_1$: Duración de la estadía (en dias).
+  \item $X_2$: Rutina de cultivos (por cada 100)
+  \item $X_3$: Número de camas (camas)
+  \item $X_4$: Censo promedio diario (pacientes)
+  \item $X_5$: Número de enfermeras (enfermeras)
+\end{itemize}
+```
+```{r}
+datos <- read.table("Equipo29.txt", header = T)
+modelo <- lm(Y ~ ., data = datos)
+betas <- round(coef(modelo), 4)
+betas1 <- as.data.frame(betas)
+```
+
+\subsection{Modelo de regresión}
+
+Al ajustar el modelo, se obtienen los siguientes coeficientes:
+
+```{r}
+rownames(betas1) <- c("$\\beta_0$", "$\\beta_1$", "$\\beta_2$", "$\\beta_3$", "$\\beta_4$", "$\\beta_5$")
+betas1 %>% 
+  kable(col.names = c("Valor del parámetro"), caption = "Tabla de valores coeficientes del modelo", escape = F, booktab = T, align = "c", row.names = T) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+Por lo tanto, el modelo de regresión ajustado es:
+$$\hat{Y}_i = `r betas[1]` + `r betas[2]` X_{1i} + `r betas[3]` X_{2i} + `r betas[4]` X_{3i} +`r betas[5]` X_{4i} + `r betas[6]`X_{5i}$$
+
+\subsection{Significancia de la regresión}
+
+Para analizar la significancia de la regresión, se plantea el siguiente
+juego de hipótesis: $$
+\begin{cases}
+  \begin{aligned}
+    H_0&: \beta_1=\beta_2=\beta_3=\beta_4=\beta_5=0 \\
+    H_1&: \text{Algún }\beta_j \text{ distinto de 0 para j=1, 2,..., 5}
+  \end{aligned}
+\end{cases}
+$$
+
+Cuyo estadístico de prueba es:
+
+```{=tex}
+\begin{equation}
+F_0 = \frac{MSR}{MSE} \stackrel{H_0}{\sim} f_{5, `r nrow(datos)-6`}\\
+\end{equation}
+```
+Ahora, se presenta la tabla Anova:
+
+```{r}
+tabla.anova <- myAnova(modelo)
+rownames(tabla.anova) <- c("Regresión", "Error")
+tabla.anova %>% 
+  kable(col.names = c("Sumas de cuadrados", "g.l.", "Cuadrado medio", "$F_0$", "P-valor"),caption = "Tabla  ANOVA para el modelo", escape=F, booktab=T, align = "c", row.names = T) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+De la tabla Anova, se observa un valor P aproximadamente igual a 0, por
+lo que se rechaza la hipótesis nula en la que $\beta_j = 0$ con
+$1 \leqslant j \leqslant 5$, aceptando la hipótesis alternativa en la
+que algún $\beta_j \neq 0$, por lo tanto el modelo de RLM propuesto es
+significativo. Esto quiere decir que el riesgo de infeccion depende
+significativamente de al menos una de las predictoras del modelo.
+
+\subsection{Significancia  de los parámetros}
+
+En el siguiente cuadro se presenta información de los parámetros, la
+cual permitirá determinar cuáles de ellos son significativos.
+
+```{r}
+tabla.coeficientes <- summary(modelo)$coefficients
+rownames(tabla.coeficientes) <- paste("$\\beta_", 0:5, "$", sep = "")
+tabla.coeficientes %>% 
+  kable(col.names = c("$\\hat{\\beta_j}$", "$SE(\\hat{\\beta_j})$", "$T_{0j}$", "P-valor"),caption = "Resumen de los coeficientes", escape=F, booktab=T, align = "c", row.names = T, digits = 4) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+Los P-valores presentes en la tabla permiten concluir que con un nivel
+de significancia $\alpha = 0.05$, los parámetros $\beta_3$ y $\beta_5$
+son significativos, pues sus P-valores son menores a $\alpha$.
+
+\subsection{Interpretación de los parámetros}
+
+Solo interpretaremos los significativos.
+
+\textbf{$\hat{\beta_3}$:} Indica que por cada unidad que se aumente el
+número de camas en el hospital ($X_3$), la probabilidad promedio de
+adquirir una infección en el hospital aumenta en 0.0731 unidades, cuando
+las demas predictoras se mantienen constantes
+
+\textbf{$\hat{\beta_5}$:} Indica que por cada unidad que se aumente en
+el número de enfermeras ($X_5$), la probabilidad promedio de adquirir
+una infección en el hospital aumenta en 0.0020 unidades, cuando las
+demas predictoras se mantienen constantes
+
+\subsection{Coeficiente de determinación múltiple $R^2$}
+```{r}
+rcuadrado <- summary(modelo)$r.squared
+```
+
+El modelo tiene un coeficiente de determinación múltiple
+$R^2 = `r {rcuadrado}`$, lo que significa que aproximadamente el $`r {round(rcuadrado, 3)*100}`\%$ de la
+variabilidad total observada en el riesgo de infección es explicada por el modelo
+de regresión multiple propuesto en el presente informe.
+
+```{=tex}
+\section{Pregunta 2}
+\subsection{Planteamiento pruebas de hipótesis  y modelo reducido}
+```
+Las covariable con el P-valor más bajo en el modelo fueron
+$X_3, X_4, X_5$, por lo tanto a través de la tabla de todas las
+regresiones posibles se pretende hacer la siguiente prueba de hipótesis:
+
+$$
+\begin{cases}
+\begin{aligned}
+\text{H}_0&: \beta_3 =\beta_4 = \beta_5 = 0\\
+\text{H}_1&: \text{Algún } \beta_j \text{ distinto de 0 para } j=3, 4, 5
+\end{aligned}
+\end{cases}
+$$
+
+```{r}
+todas.regresiones <- myAllRegTable(modelo)
+todas.regresiones <- todas.regresiones[c(31, 14), c(4, 6)]
+row.names(todas.regresiones) <- c("Modelo  completo", "Modelo reducido")
+todas.regresiones %>% 
+    kable(col.names = c("$SSE$", "Covariables en el modelo"), caption = "Resumen tabla de todas las regresiones", escape=F, booktab=T, align = "c", row.names = T, digits = 4) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+Luego un modelo reducido para la prueba de significancia del subconjunto
+es:
+
+$$Y_i = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \varepsilon; \ \varepsilon_i \stackrel{\text{iid}}{\sim} N(0, \sigma^2); \ 1 \leqslant i \leqslant 69$$
+
+\subsection{Estadístico de prueba y conclusión}
+
+Se construye el estadístico de prueba como:
+
+```{r}
+MSR <- (as.numeric(todas.regresiones$SSE[2]) - as.numeric(todas.regresiones$SSE[1]))/3
+MSE <- as.numeric(todas.regresiones$SSE[1])/(nrow(datos)-6)
+```
+```{=tex}
+\begin{equation}
+\begin{split}
+F_0 &= \frac{(SSE(\beta_0, \beta_1, \beta_2) - SSE(\beta_0, \ \cdots, \ \beta_5))/3}{MSE(\beta_0, \ \cdots, \ \beta_5)} \stackrel{H_0}{\sim} f_{3, `r nrow(datos)-6`}\\
+&= \frac{`r MSR`}{`r MSE`} \\
+&= `r MSR / MSE`
+\end{split}
+\end{equation}
+```
+Para el criterio de decision se requiere obtener el valor critico de una distribucion $f_{3, `r nrow(datos)-6`}$ a un nivel de significancia $\alpha = 0.05$, esto es, $f_{0.05, 3, `r nrow(datos)-6`} = `r round(qf(0.05, 3, nrow(datos)-6), 4)`$,
+se puede ver que $F_0 > f_{0.05, 3, 63}$ (`r round(qf(0.05, 3, nrow(datos)-6), 4)`) por tanto se
+rechaza la hipotesís nula $H_0$, y se concluye que el riesgo de
+infección depende de al menos una de las variables del subconjunto
+{$B_3$, $B_4$, $B_5$}, por lo tanto, no es posible descartar estas
+variables.
+
+```{=tex}
+\section{Pregunta 3}
+\subsection{Prueba de hipótesis y prueba de hipótesis  matricial}
+```
+Preguntas: (compruebe si estas suceden a la vez).
+
+```{=tex}
+\begin{itemize}
+  \item ¿El efecto del número de enfermeras ($X_5$) sobre el riesgo de infección, es igual a 5 veces el efecto de la rutina de cultivos ($X_2$) sobre el riesgo de infección.?
+  \item ¿El efecto de la duración de la estadia ($X_1$) sobre el riesgo de infección es igual al efecto del censo promedio diario ($X_4$) sobre el riesgo de infección.?
+  \item ¿El efecto del número de camas ($X_3$) sobre el riesgo de infección es 2 veces el efecto de la duración de la estadia ($X_1$) sobre el riesgo de infección.?
+\end{itemize}
+```
+$$
+\begin{cases}
+\begin{aligned}
+\text{H}_0&: \beta_5 = 5\beta_2; \ \beta_4  = \beta_1;\ \beta_3=2\beta_1\\
+\text{H}_1&: \text{Alguna de las igualdades no se cumple}
+\end{aligned}
+\end{cases}
+$$
+
+reescribiendo matricialmente: $$
+\begin{cases}
+\begin{aligned}
+\text{H}_0&: \mathbf{L} \underline{\mathbf{\beta}} = \underline{\mathbf{0}} \\
+\text{H}_1&: \mathbf{L} \underline{\mathbf{\beta}} \neq \underline{\mathbf{0}} \\
+\end{aligned}
+\end{cases}
+$$
+
+Con $\mathbf{L}$ dada por
+
+$$
+L = \begin{bmatrix}
+  0 & 0 & -5 & 0 & 0 & 1\\
+  0 & -1 & 0 & 0 & 1 & 0\\
+  0 & -2 & 0 & 1 & 0 & 0\\
+\end{bmatrix}
+$$
+
+El modelo reducido está dado por:
+
+$$Y_i = \beta_o  + \beta_1 X^*_{1i}+ \beta_2 X^*_{2i} +\varepsilon_i, \ \varepsilon_i \stackrel{\text{iid}}{\sim} N(0, \sigma^2); \ 1 \leqslant i \leqslant 69$$
+
+Donde $X^*_{1i} = X_{1i} + 2X_{3i} + X_{4i}$ y
+$X^*_{2i} = X_{2i} + 5X_{5i}$
+
+\subsection{Estadístico de prueba}
+
+El estadístico de prueba $F_0$ está dado por:
+
+
+```{=tex}
+\begin{equation}
+F_0 = \frac{(SSE(RM) - SSE(FM))/3}{MSE(FM)} \stackrel{H_0}{\sim} f_{3, `r nrow(datos)-6`}\\
+\end{equation}
+
+\begin{equation}
+F_0 = \frac{(101.693 - 56.938)/3}{0.90377} \stackrel{H_0}{\sim} f_{3, `r nrow(datos)-6`}\\
+\end{equation}
+```
+\section{Pregunta 4}
+
+\subsection{Supuestos del modelo}
+
+\subsubsection{Normalidad de los residuales}
+
+Para la validación de este supuesto, se planteará la siguiente prueba de
+hipótesis $$
+\begin{cases}
+\begin{aligned}
+  \text{H}_0&: \varepsilon_i \sim \text{Normal}\\
+  \text{H}_1&: \varepsilon_i \nsim \text{Normal}
+\end{aligned}
+\end{cases}
+$$
+Se validara por medio de un gráfico cuantil-cuantil, acompañada de shapiro-wilk:
+
+```{r fig.cap = "Gráfico cuantil-cuantil y normalidad de residuales"}
+myQQnorm(modelo, xlab = "Cuantiles teóricos",
+         ylab = "Cuantiles muestrales", pch=20)
+```
+Como se puede observar en la gráfica Q-Q Plot, se puede ver que la mayoría de las observaciones se encuentran sobre o muy cerca de la línea roja, que representa el ajuste de la distribución de los residuos a una distribución normal. Sin embargo, hay algunas observaciones en las colas (al comienzo y al final), que a pesar de que están muy cerca de la línea roja, si se les nota un poco diferentes a las demás. Estas observaciones podrían deberse a puntos extremos que presenta el modelo.
+
+Sin embargo, viendo que la gran mayoría de los puntos si siguen la línea roja, y debido al alto p-valor de del test de Shapiro Wilk (0.8124) como respaldo, y teniendo en cuenta
+que el nivel de significancia $\alpha = 0.05$. Concluimos que el supuesto de normalidad en los errores se cumple.
+
+\subsubsection{Varianza constante}
+
+```{r fig.cap = "Gráfico residuales estudentizados vs valores ajustados"}
+res.stud <- round(rstandard(modelo), 4)
+yhat <- round(modelo$fitted.values, 4)
+plot(yhat, res.stud, xlab = "Valores Ajustados", 
+     ylab = "Residuales Estudentizados", main = "Residuales Estudentizados vs Valores Ajustados", pch=20)
+abline(h = 0, lty = 2, lwd = 2, col = 2)
+```
+
+Del gráfico de residuales estudentizados vs valores ajustados, se puede observar que en general, el supuesto de varianza constante se cumple,ya que no hay comportamientos de que decrecimiento o aumento, y por tanto, no hay forma de decir que no se cumple. Sin embargo, hay que notar que algunos puntos están un poco alejados de la nube de puntos, lo cual podría ser un indicio de la existencia de valores extremos o falta de ajuste.
+
+\subsection{Verificación de las observaciones}
+
+
+```{r}
+Cooks.D <- round(cooks.distance(modelo), 4)
+hii.value <- round(hatvalues(modelo), 4)
+Dffits <- round(dffits(modelo), 4)
+base.diagnostico <- data.frame(res.stud, Cooks.D, hii.value, Dffits)
+```
+
+```{r include= FALSE}
+kable(base.diagnostico,caption = "Resumen de los coeficientes", escape=F, booktab=T, align = "c", row.names = T, digits = 4) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+\subsubsection{Datos atípicos}
+
+```{r fig.cap = "Identificación de datos atípicos"}
+with(base.diagnostico,
+     plot(res.stud, xlab="Observación", ylab = "Residuales",
+          main = "Residuales estudentizados", pch = 20, ylim=c(-5, 5)))
+abline(h = 3, col="red", lty = "dashed")
+abline(h =- 3, col="red", lty = "dashed")
+```
+
+```{r include = F}
+atipicos.criterio <- 3
+base.diagnostico[base.diagnostico$res.stud > atipicos.criterio | base.diagnostico$res.stud < -atipicos.criterio, ]
+```
+
+Como se puede observar en la gráfica anterior, no hay datos atípicos en
+el conjunto de datos pues ningún residual estudentizado sobrepasa el
+criterio de $|r_{estud}| > 3$.
+
+Esto podria indicar que el modelo es bastante estable, ya que al no haber valores atipicos, nuestros supuestos no se veran muy afectados. Sin embargo esto no indica que no se afecten en lo absoluto, pues aun podrian haber faltas de ajuste en el modelos y puntos influenciales.
+
+\subsubsection{Puntos de balanceo}
+
+```{r fig.cap = "Identificación de puntos de balanceo"}
+hii.criterio <- 2*(6/(nrow(datos)))
+with(base.diagnostico,
+     plot(hii.value, xlab="Observación", ylab = "Valor hii",
+          main = "Gráfica de hii para las observaciones", pch = 20, ylim=c(-0.2, 0.45)))
+abline(h = hii.criterio, col="red", lty = "dashed")
+```
+```{r}
+basehii = base.diagnostico[base.diagnostico$hii.value > hii.criterio, ][3]
+```
+
+Al observar la gráfica de observaciones vs valores $h_{ii}$, donde la
+línea punteada roja representa el valor $h_{ii} = 2\frac{p}{n}$ (`r hii.criterio`), se puede apreciar que existen `r nrow(basehii)` datos del conjunto que son puntos de
+balanceo según el criterio bajo el cual $h_{ii} > 2\frac{p}{n}$ (`r hii.criterio`), los cuales son los presentados en la tabla:
+
+```{r}
+basehii = base.diagnostico[base.diagnostico$hii.value > hii.criterio, ][3]
+kable(basehii,caption = "Puntos de balanceo", escape=F, booktab=T, align = "c", row.names = T, digits = 4) %>% 
+  kable_styling(latex_options = c("HOLD_position")) 
+```
+
+Estos puntos podrían tener un impacto grande en los datos, interpretaciones y predicciones de nuestro modelo, como en la estimacion de nuestros parametros y los interalos de confianza o de prediccion.
+
+
+\subsubsection{Puntos  influenciales}
+
+```{r fig.cap="Criterio distancias de Cook para puntos influenciales"}
+criterio.cook <- 1
+with(base.diagnostico,
+     plot(Cooks.D, xlab="Observación", ylab = "Distancia de Cook",
+          main = "Gráfica de distancias de Cook", pch = 20, ylim=c(-1.5, 1.5)))
+abline(h = criterio.cook, col="red", lty = "dashed")
+#base.diagnostico[base.diagnostico$Cooks.D > criterio.cook, ]
+```
+
+```{r fig.cap="Criterio Dffits para puntos influenciales"}
+Dffits.criterio <- 2* (6/nrow(datos))^(1/2)
+with(base.diagnostico,
+     plot(Dffits, xlab="Observación", ylab = "Dffit",
+          main = "Gráfica de observaciones vs Dffits", pch = 20, ylim=c(-2.1, 1.5)))
+abline(h = Dffits.criterio, col="red", lty = "dashed")
+abline(h = -Dffits.criterio, col="red", lty = "dashed")
+basedffits <- base.diagnostico[base.diagnostico$Dffits > Dffits.criterio | base.diagnostico$Dffits < -Dffits.criterio, ][4]
+```
+```{r}
+kable(basedffits,caption = "Puntos influenciales con Dffits", escape=F, booktab=T, align = "c", row.names = T, digits = 4) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+Como se puede ver,las observaciones 23, 27, 31 y 41 son puntos influenciales según
+el criterio de Dffits, el cual dice que para cualquier punto cuyo
+$|D_{ffits}| > 2\sqrt{\frac{p}{n}}$ (`r Dffits.criterio`), es un punto influencial. Cabe
+destacar también que con el criterio de distancias de Cook, en el cual
+para cualquier punto cuya $D_{i} > 1$, es un punto influencial, ninguno
+de los datos cumple con serlo.
+
+Estos puntos nos pueden indicar por ejemplo que:
+- Cambios de significancia estadistica en nuestros $B_{j}$, lo que puede afectar las conclusiones sobre la importancia de una variable predictora en la explicacion de la varaible de respuesta.
+
+- Predicciones y estimaciones erroneas.
+
+- Ya que los puntos influencias tienen la capacidad de por asi decirlo "jalar" el modelo hacia ellos, la estabilidad del modelo se ve comprometida, afectando asi la confiabilidad de las conclusiones.
+
+
+\subsection{Conclusión}
+
+Asi como esta el modelo en este momento, nosotros no lo tomaríamos como válido, ya que a pesar de cumplir los 2 supuestos, hay muchas observaciones extremas que no han sido analizados, los cuales probablemente están cambiando el comportamiento del modelo de muchas formas:
+
+Con respecto a la significancia del modelo, tendríamos un modelo de 5 variables predictoras, el cual solo depende de 2, por lo que valdría la pena considerar cambiar el modelo. Sin embargo, al no saber cómo están afectando exactamente esas observaciones extremas, podría ser que realmente mi respuesta dependa de más de 2 variables predictoras.
+
+Con respecto a los supuestos, si bien es cierto que en este momento se cumplen, esto podría ser debido a, de nuevo, las observaciones extremas extremos, por lo cual no se tiene una confianza para decir que realmente si se están cumpliendo, sin antes haber analizado a fondo las observaciones extremas.
+
+Y en general, no es posible decir con confianza que un modelo sea viable, debido principalmente a las observaciones extremas que pueden o no estar modificándolo.

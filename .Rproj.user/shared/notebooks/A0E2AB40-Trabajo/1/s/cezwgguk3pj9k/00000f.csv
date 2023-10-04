@@ -1,0 +1,4 @@
+"0","criterio.cook <- 1"
+"0","with(base.diagnostico,"
+"0","     plot(Cooks.D, xlab=""Observación"", ylab = ""Distancia de Cook"","
+"0","          main = ""Gráfica de distancias de Cook"", pch = 20, ylim=c(-1.5, 1.5)))"
